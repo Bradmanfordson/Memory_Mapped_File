@@ -18,9 +18,10 @@ void print_mem(vector<mem_resource> test);
 
 int main() {
     // TODO...
-    vector<mem_resource> test;
-    read_file(test);
-    print_mem(test);
+    cout << "alloc" << endl;
+    // vector<mem_resource> test;
+    // read_file(test);
+    // print_mem(test);
 
     return 0;
 }
