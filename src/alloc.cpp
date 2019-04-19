@@ -2,53 +2,39 @@
 #include <fstream>
 #include <iostream>
 #include <sys/stat.h>  // fstat
-#include <sys/types.h> // fstat
 #include <unistd.h>    // fstat
 #include <iostream>
-#include <vector>
-#include <fcntl.h>
 #include <semaphore.h>
-#include <sys/stat.h>
-#include <sys/types.h>
 #include <sys/mman.h>
-#include <unistd.h>
-#include <errno.h>
 
 void get_resources();
-void update_memory();
+void take_from_memory(int type, int num_units);
 
 char *mem_map;
-sem_t* semaphore;
+sem_t *semaphore;
+struct stat filestat;
 
-int main() {
-    // Create mapped memory region
-    
-    bool sem_create = true;
-
-    // std::ifstream file("res.txt");
-    struct stat filestat;
-    int file = open("res.txt", O_RDWR | O_SYNC,S_IWRITE | S_IREAD); // Open file with int for fstat()
+int main() { 
+    semaphore = sem_open("semaphore", O_CREAT);
+    int file = open("res.txt", O_RDWR); // Open file with int for fstat()
 
     fstat(file, &filestat); // give the filestat struct stats about the file such as file size.
-    int size = filestat.st_size;
+	mem_map = (char*)mmap(NULL, filestat.st_size, PROT_READ | PROT_WRITE, MAP_SHARED, file, 0);
 
-	mem_map = (char*)mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, file, 0);
-
-    std::cout << size<< std::endl;
-    std::cout << mem_map << std::endl; // print everything in memory
-    
     while(true){
        get_resources();
     }
 
-
     close(file);
+    sem_close(semaphore);
+    delete mem_map;
+
     return 0;
 }
 
 void get_resources(){
     std::string answer;
-    std::cout << "Do you need to allocate resources? (y/n): ";
+    std::cout << "Do you need to take resources? (y/n): ";
     std::cin >> answer;
 
     if(answer.compare("y") == 0){
@@ -73,14 +59,34 @@ void get_resources(){
             std::cout << "Number of Units (integer): ";
             std::cin>>num_units;
         }
-            std::cout <<"Type: " << type <<std::endl<< "Units: " << num_units << std::endl;
+        std::cout <<"Type: " << type <<std::endl<< "Units: " << num_units << std::endl;
         
-        update_memory();  
-    }
+        take_from_memory(type, num_units);  
+    }//else if(answer.compare("n") == 0 ){
+     //    exit(0);
+     //}
 }
 
-void update_memory(){
-    sem_wait(semaphore);
-
+void take_from_memory(int type, int num_units){
+    // sem_wait(semaphore);
     
+    // lines in res.txt should be: <type> <space> <value> <newline>
+    for(int i = 0; i < filestat.st_size; i+=4){ 
+        int t = mem_map[i] - '0';
+        int val = mem_map[i+2] - '0';
+
+        if( t == type){
+            int new_val = val - num_units;
+
+            if(new_val >= 0){
+                mem_map[i+2] = (char)(new_val + '0');
+            }else{
+                std::cout << "Not enough resources for type " << type << "." << std::endl;
+            }
+        }
+        
+        msync(mem_map, filestat.st_size, MS_SYNC);
+    }
+
+    // sem_post(semaphore);
 }
