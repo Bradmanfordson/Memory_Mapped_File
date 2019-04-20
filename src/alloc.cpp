@@ -1,6 +1,6 @@
 #include "mmf_functions.h"
 
-void allocator(int size, char *&mem_map);
+void allocator();
 
 char *mem_map;
 struct stat filestat;
@@ -12,16 +12,16 @@ int main() {
 	mem_map = (char*)mmap(NULL, filestat.st_size, PROT_READ | PROT_WRITE, MAP_SHARED, file, 0);
 
     while(true){
-       allocator(filestat.st_size, mem_map);
+       allocator();
     }
 
     close(file);
-    delete mem_map;
+    munmap(mem_map,filestat.st_size);
 
     return 0;
 }
 
-void allocator(int size, char *&mem_map){
+void allocator(){
     std::string answer;
     std::cout << "Do you need to take resources? (y/n): ";
     std::cin >> answer;
@@ -32,6 +32,27 @@ void allocator(int size, char *&mem_map){
 
         //std::cout <<"Type: " << type <<std::endl<< "Units: " << num_units << std::endl;
         
-        update_mmf(type, num_units, size, mem_map, true);  
+        for(int i = 0; i < filestat.st_size; i+=4){
+            // sem wait
+            int t = mem_map[i] - '0';
+            int val = mem_map[i+2] - '0';
+
+            if(t == type){
+                int new_val = val - num_units;
+
+                if(new_val >= 0){
+                    mem_map[i+2] = (char)(new_val + '0');
+                    
+                } else {
+                    std::cout << "Not enough resources for type " << type << "." << std::endl;
+                }
+                //signal
+                break;
+            }
+            msync(mem_map, filestat.st_size, MS_SYNC); 
+            //signal
+        }  
+    }else if (answer.compare("n") == 0){
+        exit(0);
     }
 }
