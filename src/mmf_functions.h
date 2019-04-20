@@ -8,11 +8,7 @@
 #include <sys/mman.h>
 
 void update_mmf(int type, int num_units, int size, char* &mem_map, bool alloc);
-void reporter(int size, char *&mem_map);
-void provider(int size, char *&mem_map);
-void allocator(int size, char *&mem_map);
 int get_alloc_info(std::string kind);
-
 
 
 void update_mmf(int type, int num_units, int size, char* &mem_map, bool alloc){
@@ -33,9 +29,13 @@ void update_mmf(int type, int num_units, int size, char* &mem_map, bool alloc){
                 }
             } else {
                 int new_val = val + num_units;
-                mem_map[i+2] = (char)(new_val + '0');
+                if(new_val <= 9){
+                    mem_map[i+2] = (char)(new_val + '0');
+                } else {
+                    std::cout << "Cannot add that many resources to type " << type << "." << std::endl;
+
+                }
             }
-            
         }
         
         msync(mem_map, size, MS_SYNC);
@@ -44,50 +44,6 @@ void update_mmf(int type, int num_units, int size, char* &mem_map, bool alloc){
     // sem_post(semaphore);
 }
 
-void reporter(int size, char *&mem_map){
-    std::cout << "Page size: " << getpagesize() << std::endl;
-    unsigned char v[size];
-    if(!mincore(mem_map, size, &v[0])){
-        std::cout << "Page is resident." << std::endl;
-        
-    } else {
-        std::cout << "Page is NOT resident." << std::endl;
-    }
-    std::cout << "Current Resources:" << std::endl;
-    std::cout << mem_map << std::endl;
-
-    sleep(10);
-}
-
-void provider(int size, char *&mem_map){
-    std::string answer;
-    std::cout << "Do you need to add resources? (y/n): ";
-    std::cin >> answer;
-
-    if(answer.compare("y") == 0){
-        int type = get_alloc_info("Type");
-        int num_units = get_alloc_info("Number of Units");
-        
-        //std::cout <<"Type: " << type <<std::endl<< "Units: " << num_units << std::endl;
-        
-        update_mmf(type, num_units, size, mem_map, false); 
-    }
-}
-
-void allocator(int size, char *&mem_map){
-    std::string answer;
-    std::cout << "Do you need to take resources? (y/n): ";
-    std::cin >> answer;
-
-    if(answer.compare("y") == 0){
-        int type = get_alloc_info("Type");
-        int num_units = get_alloc_info("Number of Units");
-
-        //std::cout <<"Type: " << type <<std::endl<< "Units: " << num_units << std::endl;
-        
-        update_mmf(type, num_units, size, mem_map, true);  
-    }
-}
 
 int get_alloc_info(std::string kind){
     int data;

@@ -1,5 +1,7 @@
 #include "mmf_functions.h"
 
+void allocator(int size, char *&mem_map);
+
 char *mem_map;
 struct stat filestat;
 
@@ -17,4 +19,19 @@ int main() {
     delete mem_map;
 
     return 0;
+}
+
+void allocator(int size, char *&mem_map){
+    std::string answer;
+    std::cout << "Do you need to take resources? (y/n): ";
+    std::cin >> answer;
+
+    if(answer.compare("y") == 0){
+        int type = get_alloc_info("Type");
+        int num_units = get_alloc_info("Number of Units");
+
+        //std::cout <<"Type: " << type <<std::endl<< "Units: " << num_units << std::endl;
+        
+        update_mmf(type, num_units, size, mem_map, true);  
+    }
 }
