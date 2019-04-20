@@ -1,13 +1,18 @@
 Memory Mapped Files C++
---------------------------------------
+-----------------------
 AUTHOR
     Allen Bradley Roberts
 
 NAME
-    Memory Mapped Files... TODO...
+    Memory Mapped Files
 
 MAKE
-    TODO...
+    type "make alloc" in the terminal to create the ./alloc program
+    type "make prov" in the terminal to create the ./prov-rep program
+    type "make" in the terminal to create both ./alloc and ./prov-rep programs
+    type "make clean" in the terminal to remove all .o files and builds of ./alloc and ./prov-rep
 
 RUN
-    TODO...
+    run ./alloc and ./prov-rep in two different terminals concurrently.
+        ensure that you include a valid resource file called "res.txt" in the same directory as
+        ./alloc and ./prov-rep.
